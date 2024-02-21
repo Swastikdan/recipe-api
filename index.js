@@ -28,7 +28,7 @@ const cacheMiddleware = (duration) => {
     } else {
       res.sendResponse = res.send;
       res.send = (body) => {
-        cache.put(key, body, duration * 60000); // cache for duration minutes
+        cache.put(key, body, duration * 1000); // cache for duration minutes
         res.sendResponse(body);
       };
       next();
@@ -43,7 +43,7 @@ app.use(compression());
 app.use(morgan("tiny")); // Log HTTP requests
 app.use(responseTime()); // Measure response time
 app.use(limiter); // Apply rate limiting
-app.use("/api/recipes/", cacheMiddleware(24), apiRouter); // Cache for 30 seconds
+app.use("/api/recipes/", cacheMiddleware(30), apiRouter); // Cache for 30 seconds
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Recipe API!");
