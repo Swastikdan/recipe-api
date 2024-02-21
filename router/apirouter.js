@@ -1,9 +1,17 @@
 import express from "express";
 import db from "../db/conn.js";
-import { geRandomRecipes , getRecipeById , search , searchByName , searchByIngredients  } from "../controller/apiController.js";
-
+import {
+  geRandomRecipes,
+  getRecipeById,
+  search,
+  searchByName,
+  searchByIngredients,
+  createRecipe,
+  updateRecipe,
+  deleteRecipe,
+} from "../controller/apiController.js";
 const router = express.Router();
-
+const key = process.env.key;
 // Route to get random recipes
 router.get("/", async (req, res) => {
   // Limit the number of responses to a maximum of 50
@@ -43,14 +51,14 @@ router.get("/search", async (req, res) => {
   }
 
   // Search by name
-  if(req.query.n){
+  if (req.query.n) {
     const recipes = await searchByName(db, req.query.n);
     return res.json(recipes);
   }
 
   // Search by ingredients
   if (req.query.i) {
-    const recipes = await searchByIngredients(db, req.query.i.split(','));
+    const recipes = await searchByIngredients(db, req.query.i.split(","));
     return res.json(recipes);
   }
 
@@ -60,6 +68,39 @@ router.get("/search", async (req, res) => {
   }
 
   return res.status(400).json({ message: "Invalid search query." });
+});
+
+router.post(`${key}/create`, async (req, res) => {
+  try {
+    const recipe = await createRecipe(db, req.body);
+    res.json(recipe);
+  } catch (error) {
+    if (error.message.startsWith("Validation error:")) {
+      return res.status(400).json({ message: error.message });
+    }
+    return res.status(500).json({ message: "Failed to insert recipe." });
+  }
+});
+
+router.put(`${key}/update/:id`, async (req, res) => {
+  try {
+    const recipe = await updateRecipe(db, req.params.id, req.body);
+    res.json(recipe);
+  } catch (error) {
+    if (error.message.startsWith("Validation error:")) {
+      return res.status(400).json({ message: error.message });
+    }
+    return res.status(500).json({ message: "Failed to update recipe." });
+  }
+});
+
+router.delete(`${key}/delete/:id`, async (req, res) => {
+  try {
+    const recipe = await deleteRecipe(db, req.params.id);
+    res.json(recipe);
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to delete recipe." });
+  }
 });
 
 export { router };
