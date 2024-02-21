@@ -6,6 +6,7 @@ import morgan from "morgan";
 import responseTime from "response-time";
 import rateLimit from "express-rate-limit";
 import { router as apiRouter } from "./router/apirouter.js";
+import cache from "memory-cache";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -16,6 +17,25 @@ const limiter = rateLimit({
   max: 100 // limit each IP to 100 requests per windowMs
 });
 
+// Cache middleware
+const cacheMiddleware = (duration) => {
+  return (req, res, next) => {
+    let key = "__express__" + req.originalUrl || req.url;
+    let cachedBody = cache.get(key);
+    if (cachedBody) {
+      res.send(cachedBody);
+      return;
+    } else {
+      res.sendResponse = res.send;
+      res.send = (body) => {
+        cache.put(key, body, duration * 1000);
+        res.sendResponse(body);
+      };
+      next();
+    }
+  };
+};
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -23,7 +43,7 @@ app.use(compression());
 app.use(morgan("tiny")); // Log HTTP requests
 app.use(responseTime()); // Measure response time
 app.use(limiter); // Apply rate limiting
-app.use("/api/recipes/", apiRouter);
+app.use("/api/recipes/", cacheMiddleware(30), apiRouter); // Cache for 30 seconds
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Recipe API!");
