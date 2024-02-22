@@ -6,7 +6,7 @@ import morgan from "morgan";
 import responseTime from "response-time";
 import rateLimit from "express-rate-limit";
 import { router as apiRouter } from "./router/apirouter.js";
-import cache from "memory-cache";
+// import cache from "memory-cache";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -20,23 +20,23 @@ const limiter = rateLimit({
 });
 
 // Cache middleware
-const cacheMiddleware = (duration) => {
-  return (req, res, next) => {
-    let key = "__express__" + req.originalUrl || req.url;
-    let cachedBody = cache.get(key);
-    if (cachedBody) {
-      res.send(cachedBody);
-      return;
-    } else {
-      res.sendResponse = res.send;
-      res.send = (body) => {
-        cache.put(key, body, duration * 1000); // cache for duration minutes
-        res.sendResponse(body);
-      };
-      next();
-    }
-  };
-};
+// const cacheMiddleware = (duration) => {
+//   return (req, res, next) => {
+//     let key = "__express__" + req.originalUrl || req.url;
+//     let cachedBody = cache.get(key);
+//     if (cachedBody) {
+//       res.send(cachedBody);
+//       return;
+//     } else {
+//       res.sendResponse = res.send;
+//       res.send = (body) => {
+//         cache.put(key, body, duration * 1000); // cache for duration minutes
+//         res.sendResponse(body);
+//       };
+//       next();
+//     }
+//   };
+// };
 
 app.use(cors());
 app.use(express.json());
@@ -62,7 +62,6 @@ const successResponseMiddleware = (req, res, next) => {
 
 app.use(
   "/api/recipes/",
-  cacheMiddleware(30),
   successResponseMiddleware,
   apiRouter
 );
