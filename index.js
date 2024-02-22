@@ -11,6 +11,8 @@ import cache from "memory-cache";
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.set('trust proxy', 1); // Add this line
+
 // Enable rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
