@@ -11,12 +11,12 @@ import cache from "memory-cache";
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.set('trust proxy', 1); // Add this line
+app.set("trust proxy", 1); // Add this line
 
 // Enable rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
 });
 
 // Cache middleware
@@ -45,10 +45,39 @@ app.use(compression());
 app.use(morgan("tiny")); // Log HTTP requests
 app.use(responseTime()); // Measure response time
 app.use(limiter); // Apply rate limiting
-app.use("/api/recipes/", cacheMiddleware(30), apiRouter); // Cache for 30 seconds
+const successResponseMiddleware = (req, res, next) => {
+  const oldSend = res.send;
+  res.send = function (data) {
+    let success = true;
+    let parsedData;
+    try {
+      parsedData = JSON.parse(data);
+    } catch (e) {
+      success = false;
+    }
+    oldSend.call(res, JSON.stringify({ success, recipes: parsedData }));
+  };
+  next();
+};
 
+app.use(
+  "/api/recipes/",
+  cacheMiddleware(30),
+  successResponseMiddleware,
+  apiRouter
+);
 app.get("/", (req, res) => {
-  res.send("Welcome to the Recipe API!");
+  res.redirect("https://therecipedb.vercel.app/");
+});
+app.use("/favicon.ico", express.static("public/favicon.svg"));
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message:
+      "Route not found | Visit https://github.com/Swastikdan/recipe-api for documentation.",
+  });
 });
 
 app.listen(port, (error) => {
