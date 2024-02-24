@@ -16,7 +16,7 @@ app.set("trust proxy", 1); // Add this line
 // Enable rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 1000000, // limit each IP to 100 requests per windowMs
 });
 
 // Cache middleware
@@ -60,25 +60,19 @@ const successResponseMiddleware = (req, res, next) => {
   next();
 };
 
-app.use(
-  "/api/recipes/",
-  successResponseMiddleware,
-  apiRouter
-);
+app.use("/api/recipes/", successResponseMiddleware, apiRouter);
 app.get("/", (req, res) => {
   res.redirect("https://therecipedb.vercel.app/");
 });
-app.use("/favicon.ico", express.static("public/favicon.svg"));
+app.use("/favicon.ico", express.static("public/icon.svg"));
 
 // 404 handler
-app.use((req, res) => {
+app.use((req, res, next) => {
   res.status(404).json({
-    success: false,
     message:
       "Route not found | Visit https://github.com/Swastikdan/recipe-api for documentation.",
   });
 });
-
 app.listen(port, (error) => {
   if (!error) {
     console.log(
