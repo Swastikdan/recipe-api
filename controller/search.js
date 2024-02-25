@@ -63,13 +63,16 @@ const searchByName = async (db, name) => {
 
 // Function to search for recipes by ingredients
 const searchByIngredients = async (db, ingredients) => {
-  const pipeline = buildSearchPipeline(
-    ingredients.join(" "),
-    "ingredients",
-    true,
-    { maxEdits: 1 }
-  );
-  return executeSearchPipeline(db, pipeline);
+  try {
+    const response = await db
+      .collection("recipe")
+      .find({ ingredients: { $all: ingredients } })
+      .limit(100)
+      .toArray();
+    return response;
+  } catch (e) {
+    console.error(e);
+    throw new Error("Failed to fetch recipes.");
+  }
 };
-
 export { search, searchByName, searchByIngredients };

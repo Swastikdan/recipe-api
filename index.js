@@ -61,9 +61,9 @@ const successResponseMiddleware = (req, res, next) => {
 };
 
 app.use("/api/recipes/", successResponseMiddleware, apiRouter);
-app.get("/", (req, res) => {
-  res.redirect("https://therecipedb.vercel.app/");
-});
+// app.get("/", (req, res) => {
+//   res.redirect("https://therecipedb.vercel.app/");
+// });
 app.use("/favicon.ico", express.static("public/icon.svg"));
 
 // 404 handler
